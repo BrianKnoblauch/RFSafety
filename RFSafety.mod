@@ -4,8 +4,8 @@ FROM SYSTEM  IMPORT ADR, CAST;
 FROM Windows IMPORT AppendMenu, BeginPaint, CreateMenu, CreateWindowEx, CS_SET, CW_USEDEFAULT, DefWindowProc, DestroyWindow, DispatchMessage,
                     EnableMenuItem, EndPaint, GetMessage, HDC, HMENU, HWND, IDC_ARROW, IDI_APPLICATION, LoadCursor, LoadIcon, LOWORD, LPARAM, LRESULT,
                     MB_ICONEXCLAMATION, MB_OK, MessageBox, MF_BYCOMMAND, MSG, MF_ENABLED, MF_STRING, MyInstance, PAINTSTRUCT, PostQuitMessage,
-		    RegisterClass, SetMenu, ShowWindow, SW_SHOWNORMAL, TranslateMessage, UINT, WM_CLOSE, WM_COMMAND, WM_CREATE, WM_DESTROY, WM_INITMENU,
-		    WM_PAINT, WM_SYSCOMMAND, WNDCLASS, WPARAM, WS_EX_CLIENTEDGE, WS_SYSMENU, WS_VISIBLE;
+		    RegisterClass, ShowWindow, SW_SHOWNORMAL, TranslateMessage, UINT, WM_CLOSE, WM_COMMAND, WM_DESTROY, WM_INITMENU, WM_PAINT,
+		    WM_SYSCOMMAND, WNDCLASS, WPARAM, WS_EX_CLIENTEDGE, WS_SYSMENU, WS_VISIBLE;
 
 CONST
      ABOUT_ITEM    = 1001;
@@ -24,12 +24,6 @@ BEGIN
     CASE msg OF
     | WM_COMMAND :
       (* TODO - Process form *)
-      RETURN 0;
-    | WM_CREATE  :
-      menu := CreateMenu();
-      SetMenu(hwnd, menu);
-      AppendMenu(menu, MF_STRING, ABOUT_ITEM, "&About");
-      AppendMenu(menu, MF_STRING, EXIT_ITEM,  "E&xit");
       RETURN 0;
     | WM_INITMENU:
       EnableMenuItem(menu, ABOUT_ITEM, MF_BYCOMMAND + MF_ENABLED);
@@ -65,8 +59,8 @@ VAR
     Msg             : MSG;
     wc              : WNDCLASS;
 
-BEGIN
-        (* Register the Window Class *)
+BEGIN    
+    (* Register the Window Class *)
     wc.style         := CAST(CS_SET, NIL);
     wc.lpfnWndProc   := WndProc;
     wc.cbClsExtra    := 0;
@@ -82,10 +76,14 @@ BEGIN
        MessageBox(NIL, "Window Class registration failed!", "Error!", MB_ICONEXCLAMATION + MB_OK);
        RETURN ;
     END;
+
+    menu := CreateMenu();
+    AppendMenu(menu, MF_STRING, ABOUT_ITEM, "&About");
+    AppendMenu(menu, MF_STRING, EXIT_ITEM,  "E&xit");
                
     (* Create the Window *)
     hwnd := CreateWindowEx(WS_EX_CLIENTEDGE, g_szClassName, "RFSafety", WS_VISIBLE + WS_SYSMENU, CW_USEDEFAULT, CW_USEDEFAULT,
-			   480, 360, NIL, NIL, MyInstance(), NIL);
+			   480, 360, NIL, menu, MyInstance(), NIL);
     IF hwnd = NIL THEN
        MessageBox(NIL, "Window Creation failed!", "Error!", MB_ICONEXCLAMATION + MB_OK);
        RETURN ;
