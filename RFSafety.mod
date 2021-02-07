@@ -1,21 +1,23 @@
 MODULE RFSafety;
 
 FROM SYSTEM  IMPORT ADR, CAST;
-FROM Windows IMPORT AppendMenu, BeginPaint, CreateWindowEx, CS_SET, CW_USEDEFAULT, DefWindowProc, DestroyWindow, DispatchMessage, EnableMenuItem,
-                    EndPaint, GetMessage, GetSystemMenu, HDC, HMENU, HWND, IDC_ARROW, IDI_APPLICATION, LoadCursor, LoadIcon, LOWORD, LPARAM, LRESULT,
+FROM Windows IMPORT AppendMenu, BeginPaint, CreateMenu, CreateWindowEx, CS_SET, CW_USEDEFAULT, DefWindowProc, DestroyWindow, DispatchMessage,
+                    EnableMenuItem, EndPaint, GetMessage, HDC, HMENU, HWND, IDC_ARROW, IDI_APPLICATION, LoadCursor, LoadIcon, LOWORD, LPARAM, LRESULT,
                     MB_ICONEXCLAMATION, MB_OK, MessageBox, MF_BYCOMMAND, MSG, MF_ENABLED, MF_STRING, MyInstance, PAINTSTRUCT, PostQuitMessage,
-		    RegisterClass, ShowWindow, SW_SHOWNORMAL, TranslateMessage, UINT, WM_CLOSE, WM_COMMAND, WM_CREATE, WM_DESTROY, WM_INITMENU, WM_PAINT,
-		    WM_SYSCOMMAND, WNDCLASS, WPARAM, WS_EX_CLIENTEDGE, WS_SYSMENU, WS_VISIBLE;
+		    RegisterClass, SetMenu, ShowWindow, SW_SHOWNORMAL, TranslateMessage, UINT, WM_CLOSE, WM_COMMAND, WM_CREATE, WM_DESTROY, WM_INITMENU,
+		    WM_PAINT, WM_SYSCOMMAND, WNDCLASS, WPARAM, WS_EX_CLIENTEDGE, WS_SYSMENU, WS_VISIBLE;
 
 CONST
      ABOUT_ITEM    = 1001;
      EXIT_ITEM     = 1002;
      g_szClassName = "myWindowClass";
 
+VAR
+     menu           : HMENU;
+
 PROCEDURE ["StdCall"] WndProc(hwnd : HWND; msg : UINT; wParam : WPARAM;  lParam : LPARAM): LRESULT;
 VAR
      hdc            : HDC;
-     menu           : HMENU;
      ps             : PAINTSTRUCT;
 			   
 BEGIN
@@ -24,12 +26,12 @@ BEGIN
       (* TODO - Process form *)
       RETURN 0;
     | WM_CREATE  :
-      menu := GetSystemMenu (hwnd, FALSE);
+      menu := CreateMenu();
+      SetMenu(hwnd, menu);
       AppendMenu(menu, MF_STRING, ABOUT_ITEM, "&About");
       AppendMenu(menu, MF_STRING, EXIT_ITEM,  "E&xit");
       RETURN 0;
     | WM_INITMENU:
-      menu := GetSystemMenu (hwnd, FALSE);
       EnableMenuItem(menu, ABOUT_ITEM, MF_BYCOMMAND + MF_ENABLED);
       EnableMenuItem(menu, EXIT_ITEM, MF_BYCOMMAND + MF_ENABLED);        
       RETURN 0;
