@@ -1,19 +1,15 @@
 MODULE RFSafety;
 
 FROM SYSTEM  IMPORT ADR, CAST;
-FROM Windows IMPORT AppendMenu, BeginPaint, CreateMenu, CreateWindowEx, CS_SET, CW_USEDEFAULT, DefWindowProc, DestroyWindow, DispatchMessage,
-                    EnableMenuItem, EndPaint, GetMessage, HDC, HMENU, HWND, IDC_ARROW, IDI_APPLICATION, LoadCursor, LoadIcon, LOWORD, LPARAM, LRESULT,
-                    MB_ICONEXCLAMATION, MB_OK, MessageBox, MF_BYCOMMAND, MSG, MF_ENABLED, MF_STRING, MyInstance, PAINTSTRUCT, PostQuitMessage,
-		    RegisterClass, ShowWindow, SW_SHOWNORMAL, TranslateMessage, UINT, WM_CLOSE, WM_COMMAND, WM_DESTROY, WM_INITMENU, WM_PAINT,
-		    WM_SYSCOMMAND, WNDCLASS, WPARAM, WS_EX_CLIENTEDGE, WS_SYSMENU, WS_VISIBLE;
+FROM Windows IMPORT AppendMenu, BeginPaint, CreateMenu, CreateWindowEx, CS_SET, CW_USEDEFAULT, DefWindowProc, DestroyWindow, DispatchMessage, EndPaint,
+                    GetMessage, HDC, HMENU, HWND, IDC_ARROW, IDI_APPLICATION, LoadCursor, LoadIcon, LOWORD, LPARAM, LRESULT, MB_ICONEXCLAMATION, MB_OK,
+                    MessageBox, MSG, MF_STRING, MyInstance, PAINTSTRUCT, PostQuitMessage, RegisterClass, ShowWindow, SW_SHOWNORMAL, TranslateMessage,
+		    UINT, WM_CLOSE, WM_COMMAND, WM_DESTROY, WM_PAINT, WNDCLASS, WPARAM, WS_EX_CLIENTEDGE, WS_SYSMENU, WS_VISIBLE;
 
 CONST
      ABOUT_ITEM    = 1001;
      EXIT_ITEM     = 1002;
      g_szClassName = "myWindowClass";
-
-VAR
-     menu           : HMENU;
 
 PROCEDURE ["StdCall"] WndProc(hwnd : HWND; msg : UINT; wParam : WPARAM;  lParam : LPARAM): LRESULT;
 VAR
@@ -23,11 +19,16 @@ VAR
 BEGIN
     CASE msg OF
     | WM_COMMAND :
-      (* TODO - Process form *)
-      RETURN 0;
-    | WM_INITMENU:
-      EnableMenuItem(menu, ABOUT_ITEM, MF_BYCOMMAND + MF_ENABLED);
-      EnableMenuItem(menu, EXIT_ITEM, MF_BYCOMMAND + MF_ENABLED);        
+      (* TODO - Process form data / kick off calculation? *)
+      CASE LOWORD (wParam) OF        
+        | ABOUT_ITEM:
+            (* TODO - Popup about window *)
+            RETURN 0;
+        | EXIT_ITEM:
+            PostQuitMessage (0);
+	    RETURN 0;
+	ELSE
+        END; (* CASE *)
       RETURN 0;
     | WM_PAINT   :      
       hdc := BeginPaint(hwnd, ps);
@@ -38,16 +39,6 @@ BEGIN
       DestroyWindow(hwnd);
     | WM_DESTROY :
       PostQuitMessage(0);
-    | WM_SYSCOMMAND:
-         CASE LOWORD (wParam) OF        
-        | ABOUT_ITEM:
-            (* TODO - Popup about window *)
-            RETURN 0;
-        | EXIT_ITEM:
-            PostQuitMessage (0);
-	    RETURN 0;
-	ELSE
-        END; (* CASE *)
     ELSE 
     END; (* CASE *)
     RETURN DefWindowProc(hwnd, msg, wParam, lParam);
@@ -56,6 +47,7 @@ END WndProc;
 VAR
     className       : ARRAY [0..14] OF CHAR;
     hwnd            : HWND;
+    menu            : HMENU;
     Msg             : MSG;
     wc              : WNDCLASS;
 
