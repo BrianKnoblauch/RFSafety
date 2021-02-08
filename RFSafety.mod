@@ -1,8 +1,9 @@
 MODULE RFSafety;
 
+FROM RealStr IMPORT ConvResults, StrToReal;
 FROM SYSTEM  IMPORT ADR, CAST;
 FROM Windows IMPORT AppendMenu, BeginPaint, BS_CHECKBOX, CreateMenu, CreateWindowEx, CS_SET, CW_USEDEFAULT, DefWindowProc, DestroyWindow, DispatchMessage,
-                    EndPaint,
+                    EndPaint, GetDlgItemTextA,
                     GetMessage, HDC, HMENU, HWND, IDC_ARROW, IDI_APPLICATION, InvalidateRect, LoadCursor, LoadIcon, LOWORD, LPARAM, LRESULT,
 		    MB_ICONEXCLAMATION,
                     MB_ICONINFORMATION, MB_OK, MessageBox, MSG, MF_STRING, MyInstance, PAINTSTRUCT, PostQuitMessage, RECT, RegisterClass, ShowWindow,
@@ -19,13 +20,24 @@ VAR
 
 PROCEDURE ["StdCall"] WndProc(hwnd : HWND; msg : UINT; wParam : WPARAM;  lParam : LPARAM): LRESULT;
 VAR
-     hdc            : HDC;
-     ps             : PAINTSTRUCT;
+     hdc             : HDC;
+     inputdistance   : ARRAY [0..10] OF CHAR;
+     inputfrequency  : ARRAY [0..10] OF CHAR;
+     inputgain       : ARRAY [0..10] OF CHAR;
+     inputpower      : ARRAY [0..10] OF CHAR;
+     ps              : PAINTSTRUCT;
+     resultdistance  : ConvResults;
+     resultfrequency : ConvResults;
+     resultgain      : ConvResults;
+     resultpower     : ConvResults;
+     valuedistance   : REAL;
+     valuefrequency  : REAL;
+     valuegain       : REAL;
+     valuepower      : REAL;    
 			   
 BEGIN
     CASE msg OF
-    | WM_COMMAND :
-      (* TODO - Process form data / kick off calculation? *)
+    | WM_COMMAND :      
       (* TODO - Handle checkbox click? *)
       CASE LOWORD (wParam) OF        
         | ABOUT_ITEM:          
@@ -37,7 +49,20 @@ BEGIN
             PostQuitMessage (0);
 	    RETURN 0;
         ELSE
-	     InvalidateRect(hwnd, invalidaterect, FALSE);
+	    GetDlgItemTextA(hwnd, 0, inputpower, 10);
+	    StrToReal(inputpower, valuepower, resultpower); 
+	    GetDlgItemTextA(hwnd, 0, inputgain, 10);
+	    StrToReal(inputgain, valuegain, resultgain);
+	    GetDlgItemTextA(hwnd, 0, inputfrequency, 10);
+	    StrToReal(inputfrequency, valuefrequency, resultfrequency);
+	    GetDlgItemTextA(hwnd, 0, inputdistance, 10);
+	    StrToReal(inputdistance, valuedistance, resultdistance);
+	    IF (resultpower = strAllRight) AND (resultgain = strAllRight) AND (resultfrequency = strAllRight) AND (resultdistance = strAllRight) THEN
+		 (* TODO - Perform calculations and update output text*)
+	    ELSE
+		 (* TODO - Blank output text *)
+	    END; (* IF *)
+	    InvalidateRect(hwnd, invalidaterect, FALSE);
         END; (* CASE *)
       RETURN 0;
     | WM_PAINT   :      
