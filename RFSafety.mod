@@ -68,19 +68,30 @@ BEGIN
             PostQuitMessage (0);
 	    RETURN 0;	
       ELSE
-	    (* TODO - Zero is not acceptable, will crash calculations, so don't allow it *)
 	    IF lParam = CAST(INT32, powerhwnd) THEN
 		 GetDlgItemTextA(hwnd, 0, input, 10);
 		 StrToReal(input, valuepower, resultpower);
+		 IF valuepower = 0.0 THEN
+		      resultpower := strOutOfRange;
+		 END; (* IF *)
             ELSIF lParam = CAST(INT32, gainhwnd) THEN
 		 GetDlgItemTextA(hwnd, 1, input, 10);
 		 StrToReal(input, valuegain, resultgain);
+		 IF valuegain = 0.0 THEN
+		      resultgain := strOutOfRange;
+		 END; (* IF *)
             ELSIF lParam = CAST(INT32, frequencyhwnd) THEN
 		 GetDlgItemTextA(hwnd, 2, input, 10);
 		 StrToReal(input, valuefrequency, resultfrequency);
+		 IF valuefrequency = 0.0 THEN
+		      resultfrequency := strOutOfRange;
+		 END; (* IF *)
 	    ELSIF lParam = CAST(INT32, distancehwnd) THEN
 		 GetDlgItemTextA(hwnd, 3, input, 10);
 		 StrToReal(input, valuedistance, resultdistance);
+		 IF valuedistance = 0.0 THEN
+		      resultdistance := strOutOfRange;
+		 END; (* IF *)
 	    END; (* IF *)	    
 	    IF (resultpower = strAllRight) AND (resultgain = strAllRight) AND (resultfrequency = strAllRight) AND (resultdistance = strAllRight) THEN
 		 (* TODO - Test calculation, first quick check seemed very wrong *)
