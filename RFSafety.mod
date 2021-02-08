@@ -78,14 +78,15 @@ BEGIN
 		END; (* IF *)
 	    END; (* CASE *)   
 	    RETURN 0; *)
-        ELSE
+       ELSE
+	    (* TODO - Get dialog info only works for the first input box *)
 	    GetDlgItemTextA(hwnd, 0, inputpower, 10);
 	    StrToReal(inputpower, valuepower, resultpower); 
-	    GetDlgItemTextA(hwnd, 0, inputgain, 10);
+	    GetDlgItemTextA(hwnd, 1, inputgain, 10);
 	    StrToReal(inputgain, valuegain, resultgain);
-	    GetDlgItemTextA(hwnd, 0, inputfrequency, 10);
+	    GetDlgItemTextA(hwnd, 2, inputfrequency, 10);
 	    StrToReal(inputfrequency, valuefrequency, resultfrequency);
-	    GetDlgItemTextA(hwnd, 0, inputdistance, 10);
+	    GetDlgItemTextA(hwnd, 3, inputdistance, 10);
 	    StrToReal(inputdistance, valuedistance, resultdistance);
 	    IF (resultpower = strAllRight) AND (resultgain = strAllRight) AND (resultfrequency = strAllRight) AND (resultdistance = strAllRight) THEN
 		 (* TODO - Perform calculations and update output text*)
