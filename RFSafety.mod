@@ -1,9 +1,11 @@
 MODULE RFSafety;
 
 FROM SYSTEM  IMPORT ADR, CAST;
-FROM Windows IMPORT AppendMenu, BeginPaint, CreateMenu, CreateWindowEx, CS_SET, CW_USEDEFAULT, DefWindowProc, DestroyWindow, DispatchMessage, EndPaint,
-                    GetMessage, HDC, HMENU, HWND, IDC_ARROW, IDI_APPLICATION, LoadCursor, LoadIcon, LOWORD, LPARAM, LRESULT, MB_ICONEXCLAMATION,
-                    MB_ICONINFORMATION, MB_OK, MessageBox, MSG, MF_STRING, MyInstance, PAINTSTRUCT, PostQuitMessage, RegisterClass, ShowWindow,
+FROM Windows IMPORT AppendMenu, BeginPaint, BS_CHECKBOX, CreateMenu, CreateWindowEx, CS_SET, CW_USEDEFAULT, DefWindowProc, DestroyWindow, DispatchMessage,
+                    EndPaint,
+                    GetMessage, HDC, HMENU, HWND, IDC_ARROW, IDI_APPLICATION, InvalidateRect, LoadCursor, LoadIcon, LOWORD, LPARAM, LRESULT,
+		    MB_ICONEXCLAMATION,
+                    MB_ICONINFORMATION, MB_OK, MessageBox, MSG, MF_STRING, MyInstance, PAINTSTRUCT, PostQuitMessage, RECT, RegisterClass, ShowWindow,
 		    SW_SHOWNORMAL, TextOut, TranslateMessage, UINT, WM_CLOSE, WM_COMMAND, WM_DESTROY, WM_PAINT, WNDCLASS, WPARAM, WS_CHILD,
 		    WS_EX_CLIENTEDGE, WS_SYSMENU, WS_VISIBLE;
 
@@ -11,6 +13,9 @@ CONST
      ABOUT_ITEM    = 1001;
      EXIT_ITEM     = 1002;
      g_szClassName = "myWindowClass";
+
+VAR
+     invalidaterect : RECT;
 
 PROCEDURE ["StdCall"] WndProc(hwnd : HWND; msg : UINT; wParam : WPARAM;  lParam : LPARAM): LRESULT;
 VAR
@@ -21,6 +26,7 @@ BEGIN
     CASE msg OF
     | WM_COMMAND :
       (* TODO - Process form data / kick off calculation? *)
+      (* TODO - Handle checkbox click? *)
       CASE LOWORD (wParam) OF        
         | ABOUT_ITEM:          
 	  MessageBox(NIL,
@@ -30,7 +36,8 @@ BEGIN
         | EXIT_ITEM:
             PostQuitMessage (0);
 	    RETURN 0;
-	ELSE
+        ELSE
+	     InvalidateRect(hwnd, invalidaterect, FALSE);
         END; (* CASE *)
       RETURN 0;
     | WM_PAINT   :      
@@ -75,14 +82,20 @@ VAR
     className       : ARRAY [0..14] OF CHAR;
     distancehwnd    : HWND;
     frequencyhwnd   : HWND; 
-    gainhwnd        : HWND; 
+    gainhwnd        : HWND;
+    gfhwnd          : HWND;
     hwnd            : HWND;
     menu            : HMENU;
     Msg             : MSG;
     powerhwnd       : HWND;
     wc              : WNDCLASS;
 
-BEGIN    
+BEGIN
+    invalidaterect.left := 250;
+    invalidaterect.top := 10;
+    invalidaterect.right := 350;
+    invalidaterect.bottom := 420;
+    
     (* Register the Window Class *)
     wc.style         := CAST(CS_SET, NIL);
     wc.lpfnWndProc   := WndProc;
@@ -117,12 +130,14 @@ BEGIN
     gainhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 40, 80, 20, hwnd, NIL, MyInstance(), NIL);
     frequencyhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 70, 80, 20, hwnd, NIL, MyInstance(), NIL);
     distancehwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 100, 80, 20, hwnd, NIL, MyInstance(), NIL);
+    gfhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Button", "", WS_CHILD + BS_CHECKBOX, 250, 130, 17, 17, hwnd, NIL, MyInstance(), NIL);
     
     ShowWindow(hwnd, SW_SHOWNORMAL);
     ShowWindow(powerhwnd, SW_SHOWNORMAL);
     ShowWindow(gainhwnd, SW_SHOWNORMAL);
     ShowWindow(frequencyhwnd, SW_SHOWNORMAL);
     ShowWindow(distancehwnd, SW_SHOWNORMAL);
+    ShowWindow(gfhwnd, SW_SHOWNORMAL);
             
     (* The Message Loop *)
     WHILE GetMessage( Msg, NIL, 0, 0) DO
