@@ -2,7 +2,7 @@ MODULE RFSafety;
 
 FROM RealMath IMPORT pi, power, sqrt;
 FROM RealStr  IMPORT ConvResults, RealToStr, StrToReal;
-FROM SYSTEM   IMPORT ADR, CAST;
+FROM SYSTEM   IMPORT ADR, CAST, INT32;
 FROM Windows  IMPORT AppendMenu, BeginPaint, BS_CHECKBOX, CreateMenu, CreateSolidBrush, CreateWindowEx, CS_SET, CW_USEDEFAULT, DefWindowProc,
                      DestroyWindow, DispatchMessage, EndPaint, FillRect, GetBkColor, GetDlgItemTextA, GetMessage, HDC, HMENU, HWND, IDC_ARROW,
                      IDI_APPLICATION, InvalidateRect, LoadCursor, LoadIcon, LOWORD, LPARAM, LRESULT, MB_ICONEXCLAMATION, MB_ICONINFORMATION, MB_OK,
@@ -16,8 +16,12 @@ CONST
      g_szClassName = "myWindowClass";
 
 VAR
-     invalidaterect               : RECT;
+     distancehwnd                 : HWND;
+     frequencyhwnd                : HWND;    
+     gfhwnd                       : HWND;          
      gfchecked                    : BOOLEAN;
+     gainhwnd                     : HWND;
+     invalidaterect               : RECT;
      outputcompliancecontrolled   : ARRAY [0..3] OF CHAR;
      outputcomplianceuncontrolled : ARRAY [0..3] OF CHAR;
      outputdensity                : ARRAY [0..10] OF CHAR;
@@ -25,6 +29,15 @@ VAR
      outputdistanceuncontrolled   : ARRAY [0..10] OF CHAR;
      outputmpecontrolled          : ARRAY [0..10] OF CHAR;
      outputmpeuncontrolled        : ARRAY [0..10] OF CHAR;
+     powerhwnd                    : HWND;
+     resultdistance               : ConvResults;
+     resultfrequency              : ConvResults;
+     resultgain                   : ConvResults;
+     resultpower                  : ConvResults;
+     valuedistance                : REAL;
+     valuefrequency               : REAL;
+     valuegain                    : REAL;
+     valuepower                   : REAL;
 
 PROCEDURE ["StdCall"] WndProc(hwnd : HWND; msg : UINT; wParam : WPARAM;  lParam : LPARAM): LRESULT;
 VAR
@@ -34,23 +47,12 @@ VAR
      EIRP            : REAL;
      GF              : REAL;
      hdc             : HDC;
-     inputdistance   : ARRAY [0..10] OF CHAR;
-     inputfrequency  : ARRAY [0..10] OF CHAR;
-     inputgain       : ARRAY [0..10] OF CHAR;
-     inputpower      : ARRAY [0..10] OF CHAR;
+     input           : ARRAY [0..10] OF CHAR;
      PWR             : REAL;
-     PWRDENS       : REAL;
-     ps              : PAINTSTRUCT;
-     resultdistance  : ConvResults;
-     resultfrequency : ConvResults;
-     resultgain      : ConvResults;
-     resultpower     : ConvResults;
+     PWRDENS         : REAL;
+     ps              : PAINTSTRUCT;     
      std1            : REAL;
-     std2            : REAL;
-     valuedistance   : REAL;
-     valuefrequency  : REAL;
-     valuegain       : REAL;
-     valuepower      : REAL;    
+     std2            : REAL;         
 			   
 BEGIN
     CASE msg OF
@@ -66,16 +68,22 @@ BEGIN
             PostQuitMessage (0);
 	    RETURN 0;	
        ELSE
-	    (* TODO - Get dialog info only works for the first input box *)
-	    GetDlgItemTextA(hwnd, 0, inputpower, 10);
-	    StrToReal(inputpower, valuepower, resultpower); 
-	    GetDlgItemTextA(hwnd, 1, inputgain, 10);
-	    StrToReal(inputgain, valuegain, resultgain);
-	    GetDlgItemTextA(hwnd, 2, inputfrequency, 10);
-	    StrToReal(inputfrequency, valuefrequency, resultfrequency);
-	    GetDlgItemTextA(hwnd, 3, inputdistance, 10);
-	    StrToReal(inputdistance, valuedistance, resultdistance);
-	    IF (resultpower = strAllRight) AND (resultgain = strAllRight) AND (resultfrequency = strAllRight) AND (resultdistance = strAllRight) THEN
+	    (* The correct section is getting called, but I can't get the values for anything other than power *)
+	    GetDlgItemTextA(CAST(HWND, lParam), 0, input, 10);
+	    IF lParam = CAST(INT32, powerhwnd) THEN
+		 StrToReal(input, valuepower, resultpower);
+		 RealToStr(valuepower, outputdensity);
+            ELSIF lParam = CAST(INT32, gainhwnd) THEN
+		 StrToReal(input, valuegain, resultgain);
+		 RealToStr(valuegain, outputdensity);
+            ELSIF lParam = CAST(INT32, frequencyhwnd) THEN
+		 StrToReal(input, valuefrequency, resultfrequency);
+		 RealToStr(valuefrequency, outputdensity);
+	    ELSIF lParam = CAST(INT32, distancehwnd) THEN
+		 StrToReal(input, valuedistance, resultdistance);
+		 RealToStr(valuedistance, outputdensity);
+	    END; (* IF *)	    
+	    (*IF (resultpower = strAllRight) AND (resultgain = strAllRight) AND (resultfrequency = strAllRight) AND (resultdistance = strAllRight) THEN
 		 (* TODO - Perform calculations and update output text*)
 		 (* PWR = 1000 * WATTS *)
 		 PWR := valuepower * 1000.0;
@@ -157,7 +165,7 @@ BEGIN
 		 outputdistanceuncontrolled := "          ";
 		 outputmpecontrolled := "          ";
 		 outputmpeuncontrolled := "          ";
-	    END; (* IF *)
+	    END; (* IF *)*)
 	    InvalidateRect(hwnd, invalidaterect, FALSE);
         END; (* CASE *)
       RETURN 0;
@@ -207,15 +215,10 @@ BEGIN
 END WndProc;
 
 VAR
-    className       : ARRAY [0..14] OF CHAR;
-    distancehwnd    : HWND;
-    frequencyhwnd   : HWND; 
-    gainhwnd        : HWND;
-    gfhwnd          : HWND;
+    className       : ARRAY [0..14] OF CHAR;    
     hwnd            : HWND;
     menu            : HMENU;
-    Msg             : MSG;
-    powerhwnd       : HWND;
+    Msg             : MSG;   
     wc              : WNDCLASS;
 
 BEGIN
@@ -223,6 +226,10 @@ BEGIN
     invalidaterect.top := 10;
     invalidaterect.right := 350;
     invalidaterect.bottom := 420;
+    resultdistance := strEmpty;         
+    resultfrequency := strEmpty;            
+    resultgain := strEmpty;                 
+    resultpower := strEmpty;
     
     (* Register the Window Class *)
     wc.style         := CAST(CS_SET, NIL);
