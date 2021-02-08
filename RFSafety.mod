@@ -2,7 +2,8 @@ MODULE RFSafety;
 
 FROM SYSTEM  IMPORT ADR, CAST;
 FROM Windows IMPORT AppendMenu, BeginPaint, CreateMenu, CreateWindowEx, CS_SET, CW_USEDEFAULT, DefWindowProc, DestroyWindow, DispatchMessage, EndPaint,
-                    GetMessage, HDC, HMENU, HWND, IDC_ARROW, IDI_APPLICATION, LoadCursor, LoadIcon, LOWORD, LPARAM, LRESULT, MB_ICONEXCLAMATION, MB_OK,
+                    GetMessage, HDC, HMENU, HWND, IDC_ARROW, IDI_APPLICATION, LoadCursor, LoadIcon, LOWORD, LPARAM, LRESULT, MB_ICONEXCLAMATION,
+                    MB_ICONINFORMATION, MB_OK,
                     MessageBox, MSG, MF_STRING, MyInstance, PAINTSTRUCT, PostQuitMessage, RegisterClass, ShowWindow, SW_SHOWNORMAL, TranslateMessage,
 		    UINT, WM_CLOSE, WM_COMMAND, WM_DESTROY, WM_PAINT, WNDCLASS, WPARAM, WS_EX_CLIENTEDGE, WS_SYSMENU, WS_VISIBLE;
 
@@ -21,8 +22,10 @@ BEGIN
     | WM_COMMAND :
       (* TODO - Process form data / kick off calculation? *)
       CASE LOWORD (wParam) OF        
-        | ABOUT_ITEM:
-            (* TODO - Popup about window *)
+        | ABOUT_ITEM:          
+	  MessageBox(NIL,
+		     "A port from Java to Modula-2 of a port from BASIC to Java of FCC RF Safety calculations from the early 2000's.  Use at your own risk as it's still in beta and has not yet been updated to current FCC regulations.",
+		     "RFSafety", MB_ICONINFORMATION + MB_OK);
             RETURN 0;
         | EXIT_ITEM:
             PostQuitMessage (0);
