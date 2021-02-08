@@ -58,6 +58,7 @@ BEGIN
     CASE msg OF
     | WM_COMMAND :      
       (* TODO - Handle checkbox click? *)
+      (* TODO - Tab to next field? *)
       CASE LOWORD(wParam) OF        
         | ABOUT_ITEM:          
 	  MessageBox(NIL,
@@ -83,7 +84,7 @@ BEGIN
             ELSIF lParam = CAST(INT32, frequencyhwnd) THEN
 		 GetDlgItemTextA(hwnd, 2, input, 10);
 		 StrToReal(input, valuefrequency, resultfrequency);
-		 IF valuefrequency = 0.0 THEN
+		 IF (valuefrequency = 0.0) OR (valuefrequency >= 100000.0) THEN
 		      resultfrequency := strOutOfRange;
 		 END; (* IF *)
 	    ELSIF lParam = CAST(INT32, distancehwnd) THEN
@@ -122,14 +123,10 @@ BEGIN
 		 ELSIF valuefrequency < 1500.0 THEN
 		      std1 := valuefrequency / 300.0;
 		      std2 := valuefrequency / 1500.0;
-		 ELSIF valuefrequency < 100000.0 THEN
+		 ELSE (* Frequences up to the upper limit as caught above *)
 		      std1 := 5.0;
-		      std2 := 1.0;
-		 ELSE
-                      (* TODO - Add note field or just break as not valid? *)
+		      std2 := 1.0;		 
 		      (* 320 PRINT "THE FCC DOES NOT HAVE EXPOSURE LIMITS ABOVE 100 GHZ":GOTO 250 *)
-		      std1 := 0.0;
-		      std2 := 0.0;
 		 END; (* IF *)
 		 (* 370 GF=.25:GR$="WITHOUT":IF G$="Y" THEN GF=.64:GR$="WITH"
                     380 IF G$="y" THEN GF=.64:GR$="WITH" *)
