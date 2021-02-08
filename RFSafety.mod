@@ -1,15 +1,16 @@
 MODULE RFSafety;
 
-FROM RealStr IMPORT ConvResults, StrToReal;
-FROM SYSTEM  IMPORT ADR, CAST;
-FROM Windows IMPORT AppendMenu, BeginPaint, BS_CHECKBOX, CreateMenu, CreateSolidBrush, CreateWindowEx, CS_SET, CW_USEDEFAULT, DefWindowProc,
-                    DestroyWindow, DispatchMessage,
-                    EndPaint, FillRect, GetBkColor, GetDlgItemTextA,
-                    GetMessage, HDC, HMENU, HWND, IDC_ARROW, IDI_APPLICATION, InvalidateRect, LoadCursor, LoadIcon, LOWORD, LPARAM, LRESULT,
-		    MB_ICONEXCLAMATION,
-                    MB_ICONINFORMATION, MB_OK, MessageBox, MSG, MF_STRING, MyInstance, PAINTSTRUCT, PostQuitMessage, RECT, RegisterClass, ShowWindow,
-		    SW_SHOWNORMAL, TextOut, TranslateMessage, UINT, WM_CLOSE, WM_COMMAND, WM_DESTROY, WM_PAINT, WNDCLASS, WPARAM, WS_CHILD,
-		    WS_EX_CLIENTEDGE, WS_SYSMENU, WS_VISIBLE;
+FROM RealMath IMPORT power;
+FROM RealStr  IMPORT ConvResults, StrToReal;
+FROM SYSTEM   IMPORT ADR, CAST;
+FROM Windows  IMPORT AppendMenu, BeginPaint, BM_GETCHECK, BN_CLICKED, BS_CHECKBOX, CreateMenu, CreateSolidBrush, CreateWindowEx, CS_SET, CW_USEDEFAULT,
+                     DefWindowProc, DestroyWindow, DispatchMessage, EndPaint, FillRect, GetBkColor, GetDlgItemTextA,
+                     GetMessage, HDC, HIWORD, HMENU, HWND, IDC_ARROW, IDI_APPLICATION, InvalidateRect, LoadCursor, LoadIcon, LOWORD,
+		     LPARAM, LRESULT, MB_ICONEXCLAMATION,
+                     MB_ICONINFORMATION, MB_OK, MessageBox, MSG, MF_STRING, MyInstance, PAINTSTRUCT, PostQuitMessage, RECT, RegisterClass,
+		     SendDlgItemMessage, ShowWindow,
+		     SW_SHOWNORMAL, TextOut, TranslateMessage, UINT, WM_CLOSE, WM_COMMAND, WM_DESTROY, WM_PAINT, WNDCLASS, WPARAM, WS_CHILD,
+		     WS_EX_CLIENTEDGE, WS_SYSMENU, WS_VISIBLE;
 
 CONST
      ABOUT_ITEM    = 1001;
@@ -17,7 +18,8 @@ CONST
      g_szClassName = "myWindowClass";
 
 VAR
-     invalidaterect : RECT;
+     invalidaterect               : RECT;
+     gfchecked                    : BOOLEAN;
      outputcompliancecontrolled   : ARRAY [0..3] OF CHAR;
      outputcomplianceuncontrolled : ARRAY [0..3] OF CHAR;
      outputdensity                : ARRAY [0..10] OF CHAR;
@@ -28,16 +30,22 @@ VAR
 
 PROCEDURE ["StdCall"] WndProc(hwnd : HWND; msg : UINT; wParam : WPARAM;  lParam : LPARAM): LRESULT;
 VAR
+     DX              : REAL;
+     EIRP            : REAL;
+     gf              : REAL;
      hdc             : HDC;
      inputdistance   : ARRAY [0..10] OF CHAR;
      inputfrequency  : ARRAY [0..10] OF CHAR;
      inputgain       : ARRAY [0..10] OF CHAR;
      inputpower      : ARRAY [0..10] OF CHAR;
+     PWR             : REAL;
      ps              : PAINTSTRUCT;
      resultdistance  : ConvResults;
      resultfrequency : ConvResults;
      resultgain      : ConvResults;
      resultpower     : ConvResults;
+     std1            : REAL;
+     std2            : REAL;
      valuedistance   : REAL;
      valuefrequency  : REAL;
      valuegain       : REAL;
@@ -47,7 +55,7 @@ BEGIN
     CASE msg OF
     | WM_COMMAND :      
       (* TODO - Handle checkbox click? *)
-      CASE LOWORD (wParam) OF        
+      CASE LOWORD(wParam) OF        
         | ABOUT_ITEM:          
 	  MessageBox(NIL,
 		     "A port from Java to Modula-2 of a port from BASIC to Java of FCC RF Safety calculations from the early 2000's.  Use at your own risk as it's still in beta and has not yet been updated to current FCC regulations.",
@@ -56,6 +64,17 @@ BEGIN
         | EXIT_ITEM:
             PostQuitMessage (0);
 	    RETURN 0;
+	(* TODO - Checkbox activation code does not work *)
+(*	| IDB_CHECKBOX:
+	    CASE HIWORD(wParam) OF
+	      | BN_CLICKED:
+	        IF SendDlgItemMessage(hwnd, IDB_CHECKBOX, BM_GETCHECK, 0, 0) = 0 THEN
+                     MessageBox(NIL, "Checkbox Selected", "Success", MB_OK | MB_ICONINFORMATION);
+                ELSE
+                     MessageBox(NIL, "Checkbox Unselected", "Success", MB_OK | MB_ICONINFORMATION);
+		END; (* IF *)
+	    END; (* CASE *)   
+	    RETURN 0; *)
         ELSE
 	    GetDlgItemTextA(hwnd, 0, inputpower, 10);
 	    StrToReal(inputpower, valuepower, resultpower); 
@@ -67,6 +86,49 @@ BEGIN
 	    StrToReal(inputdistance, valuedistance, resultdistance);
 	    IF (resultpower = strAllRight) AND (resultgain = strAllRight) AND (resultfrequency = strAllRight) AND (resultdistance = strAllRight) THEN
 		 (* TODO - Perform calculations and update output text*)
+		 (* PWR = 1000 * WATTS *)
+		 PWR := valuepower * 1000.0;
+		 (* EIRP = PWR * (10 ^ (GAIN / 10)) *)
+		 EIRP := PWR * power(valuegain / 10.0, 10.0);
+		 (* DX = FT * 30.48 *)
+		 DX := valuedistance * 30.48;
+		 (* 260 IF F<1.34 THEN STD1=100:STD2=100:GOTO 330
+		    270 IF F<3 THEN STD1=100:STD2=180/((F)^2):GOTO 330
+		    280 IF F<30 THEN STD1=900/((F)^2):STD2=180/((F)^2):GOTO 330
+		    290 IF F<300 THEN STD1=1:STD2=.2:GOTO 330
+		    300 IF F<1500 THEN STD1=F/300:STD2=F/1500:GOTO 330
+		    310 IF F<100000! THEN STD1=5:STD2=1:GOTO 330 *)
+		 IF valuefrequency < 1.34 THEN
+		      std1 := 100.0;
+		      std2 := 100.0;
+		 ELSIF valuefrequency < 3.0 THEN
+		      std1 := 100.0;
+		      std2 := 180.0 / power(valuefrequency, 2.0);
+		 ELSIF valuefrequency < 30.0 THEN
+		      std1 := 900.0 / power(valuefrequency, 2.0);
+		      std2 := 180.0 / power(valuefrequency, 2.0);
+		 ELSIF valuefrequency < 300.0 THEN
+		      std1 := 1.0;
+		      std2 := 0.2;
+		 ELSIF valuefrequency < 1500.0 THEN
+		      std1 := valuefrequency / 300.0;
+		      std2 := valuefrequency / 1500.0;
+		 ELSIF valuefrequency < 100000.0 THEN
+		      std1 := 5.0;
+		      std2 := 1.0;
+		 ELSE
+                      (* TODO - Add note field? *)
+		      (* 320 PRINT "THE FCC DOES NOT HAVE EXPOSURE LIMITS ABOVE 100 GHZ":GOTO 250 *)
+		      std1 := 0.0;
+		      std2 := 0.0;
+		 END; (* IF *)
+		 (* 370 GF=.25:GR$="WITHOUT":IF G$="Y" THEN GF=.64:GR$="WITH"
+                    380 IF G$="y" THEN GF=.64:GR$="WITH" *)
+		 IF gfchecked THEN
+		      gf := 0.64;
+		 ELSE
+		      gf := 0.25;
+		 END; (* IF *)
 	    ELSE
 		 outputcompliancecontrolled := " NO";
 		 outputcomplianceuncontrolled := " NO";
@@ -177,6 +239,8 @@ BEGIN
     frequencyhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 70, 80, 20, hwnd, NIL, MyInstance(), NIL);
     distancehwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 100, 80, 20, hwnd, NIL, MyInstance(), NIL);
     gfhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Button", "", WS_CHILD + BS_CHECKBOX, 250, 130, 17, 17, hwnd, NIL, MyInstance(), NIL);
+
+    gfchecked := FALSE;
     
     ShowWindow(hwnd, SW_SHOWNORMAL);
     ShowWindow(powerhwnd, SW_SHOWNORMAL);
