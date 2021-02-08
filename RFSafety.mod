@@ -4,8 +4,8 @@ FROM SYSTEM  IMPORT ADR, CAST;
 FROM Windows IMPORT AppendMenu, BeginPaint, CreateMenu, CreateWindowEx, CS_SET, CW_USEDEFAULT, DefWindowProc, DestroyWindow, DispatchMessage, EndPaint,
                     GetMessage, HDC, HMENU, HWND, IDC_ARROW, IDI_APPLICATION, LoadCursor, LoadIcon, LOWORD, LPARAM, LRESULT, MB_ICONEXCLAMATION,
                     MB_ICONINFORMATION, MB_OK, MessageBox, MSG, MF_STRING, MyInstance, PAINTSTRUCT, PostQuitMessage, RegisterClass, ShowWindow,
-		    SW_SHOWNORMAL, TextOut, TranslateMessage, UINT, WM_CLOSE, WM_COMMAND, WM_DESTROY, WM_PAINT, WNDCLASS, WPARAM, WS_EX_CLIENTEDGE,
-		    WS_SYSMENU, WS_VISIBLE;
+		    SW_SHOWNORMAL, TextOut, TranslateMessage, UINT, WM_CLOSE, WM_COMMAND, WM_DESTROY, WM_PAINT, WNDCLASS, WPARAM, WS_CHILD,
+		    WS_EX_CLIENTEDGE, WS_SYSMENU, WS_VISIBLE;
 
 CONST
      ABOUT_ITEM    = 1001;
@@ -73,9 +73,13 @@ END WndProc;
 
 VAR
     className       : ARRAY [0..14] OF CHAR;
+    distancehwnd    : HWND;
+    frequencyhwnd   : HWND; 
+    gainhwnd        : HWND; 
     hwnd            : HWND;
     menu            : HMENU;
     Msg             : MSG;
+    powerhwnd       : HWND;
     wc              : WNDCLASS;
 
 BEGIN    
@@ -102,14 +106,23 @@ BEGIN
                
     (* Create the Window *)
     hwnd := CreateWindowEx(WS_EX_CLIENTEDGE, g_szClassName, "RFSafety", WS_VISIBLE + WS_SYSMENU, CW_USEDEFAULT, CW_USEDEFAULT,
-			   480, 420, NIL, menu, MyInstance(), NIL);
+			   350, 420, NIL, menu, MyInstance(), NIL);
     IF hwnd = NIL THEN
        MessageBox(NIL, "Window Creation failed!", "Error!", MB_ICONEXCLAMATION + MB_OK);
        RETURN ;
     END;
 
     (* Create menu (exit and about box) plus input windows *)
+    powerhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 10, 80, 20, hwnd, NIL, MyInstance(), NIL);
+    gainhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 40, 80, 20, hwnd, NIL, MyInstance(), NIL);
+    frequencyhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 70, 80, 20, hwnd, NIL, MyInstance(), NIL);
+    distancehwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 100, 80, 20, hwnd, NIL, MyInstance(), NIL);
+    
     ShowWindow(hwnd, SW_SHOWNORMAL);
+    ShowWindow(powerhwnd, SW_SHOWNORMAL);
+    ShowWindow(gainhwnd, SW_SHOWNORMAL);
+    ShowWindow(frequencyhwnd, SW_SHOWNORMAL);
+    ShowWindow(distancehwnd, SW_SHOWNORMAL);
             
     (* The Message Loop *)
     WHILE GetMessage( Msg, NIL, 0, 0) DO
