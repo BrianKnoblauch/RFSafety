@@ -1,7 +1,7 @@
 MODULE RFSafety;
 
-FROM RealMath IMPORT power;
-FROM RealStr  IMPORT ConvResults, StrToReal;
+FROM RealMath IMPORT pi, power, sqrt;
+FROM RealStr  IMPORT ConvResults, RealToStr, StrToReal;
 FROM SYSTEM   IMPORT ADR, CAST;
 FROM Windows  IMPORT AppendMenu, BeginPaint, BM_GETCHECK, BN_CLICKED, BS_CHECKBOX, CreateMenu, CreateSolidBrush, CreateWindowEx, CS_SET, CW_USEDEFAULT,
                      DefWindowProc, DestroyWindow, DispatchMessage, EndPaint, FillRect, GetBkColor, GetDlgItemTextA,
@@ -31,14 +31,17 @@ VAR
 PROCEDURE ["StdCall"] WndProc(hwnd : HWND; msg : UINT; wParam : WPARAM;  lParam : LPARAM): LRESULT;
 VAR
      DX              : REAL;
+     DX1             : REAL;
+     DX2             : REAL;
      EIRP            : REAL;
-     gf              : REAL;
+     GF              : REAL;
      hdc             : HDC;
      inputdistance   : ARRAY [0..10] OF CHAR;
      inputfrequency  : ARRAY [0..10] OF CHAR;
      inputgain       : ARRAY [0..10] OF CHAR;
      inputpower      : ARRAY [0..10] OF CHAR;
      PWR             : REAL;
+     PWRDENS       : REAL;
      ps              : PAINTSTRUCT;
      resultdistance  : ConvResults;
      resultfrequency : ConvResults;
@@ -117,7 +120,7 @@ BEGIN
 		      std1 := 5.0;
 		      std2 := 1.0;
 		 ELSE
-                      (* TODO - Add note field? *)
+                      (* TODO - Add note field or just break as not valid? *)
 		      (* 320 PRINT "THE FCC DOES NOT HAVE EXPOSURE LIMITS ABOVE 100 GHZ":GOTO 250 *)
 		      std1 := 0.0;
 		      std2 := 0.0;
@@ -125,9 +128,38 @@ BEGIN
 		 (* 370 GF=.25:GR$="WITHOUT":IF G$="Y" THEN GF=.64:GR$="WITH"
                     380 IF G$="y" THEN GF=.64:GR$="WITH" *)
 		 IF gfchecked THEN
-		      gf := 0.64;
+		      GF := 0.64;
 		 ELSE
-		      gf := 0.25;
+		      GF := 0.25;
+		 END; (* IF *)
+		 (* 390 PWRDENS = (GF * EIRP) / (3.14159 * (DX ^ 2)) *)
+		 PWRDENS := (GF * EIRP) / (pi * power(DX, 2.0));
+           	 (* 400 PWRDENS=(INT((PWRDENS*10000)+.5))/10000 *)              
+		 (* 410 DX1=SQR((GF*EIRP)/(STD1*3.14159)):DX1=DX1/30.48:DX1=(INT((DX1*10)+.5))/10 *)
+		 DX1 := sqrt((GF * EIRP) / (std1 * pi)) / 30.48;
+		 (* 420 DX2=SQR((GF*EIRP)/(STD2*3.14159)):DX2=DX2/30.48:DX2=(INT((DX2*10)+.5))/10 *)
+		 DX2 := sqrt((GF * EIRP) / (std2 * pi)) / 30.48;
+                 (* 430 STD1=(INT((STD1*100)+.5))/100:STD2=(INT((STD2*100)+.5))/100 *)              
+                 (* 450 PRINT "FROM THE ANTENNA CENTER THE ESTIMATED POWER DENSITY IS";PWRDENS;"MW/CM2.":PRINT *)
+		 RealToStr(PWRDENS, outputdensity);
+		 (* 460 PRINT "AT";F;"MHZ, THE MAXIMUM PERMISSIBLE EXPOSURE (MPE) IN `CONTROLLED" *)
+		 (* 470 PRINT "ENVIRONMENTS' (SUCH AS YOUR OWN HOUSEHOLD OR CAR) IS"; STD1; "MW/CM2." *)
+		 RealToStr(std1, outputmpecontrolled);
+		 (* 480 PRINT "THE MPE IN `UNCONTROLLED ENVIRONMENTS' (SUCH AS NEIGHBORS' PROPERTY)" *)
+		 (* 490 PRINT "IS"; STD2; "MW/CM2.  THIS INSTALLATION WOULD MEET THE CONTROLLED MPE" *)
+		 RealToStr(std2, outputmpeuncontrolled);
+		 (* 500 PRINT "LIMIT AT";DX1;"FEET AND THE UNCONTROLLED LIMIT AT";DX2;"FEET." *)
+		 RealToStr(DX1, outputdistancecontrolled);
+		 RealToStr(DX2, outputdistanceuncontrolled);
+		 IF (DX / 30.48) > DX1 THEN
+		      outputcompliancecontrolled := "YES";
+		 ELSE
+		      outputcompliancecontrolled := " NO";
+		 END; (* IF *)
+		 IF (DX / 30.48) > DX2 THEN
+		      outputcomplianceuncontrolled := "YES";
+		 ELSE
+		      outputcomplianceuncontrolled := " NO";
 		 END; (* IF *)
 	    ELSE
 		 outputcompliancecontrolled := " NO";
