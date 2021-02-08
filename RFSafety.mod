@@ -3,14 +3,12 @@ MODULE RFSafety;
 FROM RealMath IMPORT pi, power, sqrt;
 FROM RealStr  IMPORT ConvResults, RealToStr, StrToReal;
 FROM SYSTEM   IMPORT ADR, CAST;
-FROM Windows  IMPORT AppendMenu, BeginPaint, BM_GETCHECK, BN_CLICKED, BS_CHECKBOX, CreateMenu, CreateSolidBrush, CreateWindowEx, CS_SET, CW_USEDEFAULT,
-                     DefWindowProc, DestroyWindow, DispatchMessage, EndPaint, FillRect, GetBkColor, GetDlgItemTextA,
-                     GetMessage, HDC, HIWORD, HMENU, HWND, IDC_ARROW, IDI_APPLICATION, InvalidateRect, LoadCursor, LoadIcon, LOWORD,
-		     LPARAM, LRESULT, MB_ICONEXCLAMATION,
-                     MB_ICONINFORMATION, MB_OK, MessageBox, MSG, MF_STRING, MyInstance, PAINTSTRUCT, PostQuitMessage, RECT, RegisterClass,
-		     SendDlgItemMessage, ShowWindow,
-		     SW_SHOWNORMAL, TextOut, TranslateMessage, UINT, WM_CLOSE, WM_COMMAND, WM_DESTROY, WM_PAINT, WNDCLASS, WPARAM, WS_CHILD,
-		     WS_EX_CLIENTEDGE, WS_SYSMENU, WS_VISIBLE;
+FROM Windows  IMPORT AppendMenu, BeginPaint, BS_CHECKBOX, CreateMenu, CreateSolidBrush, CreateWindowEx, CS_SET, CW_USEDEFAULT, DefWindowProc,
+                     DestroyWindow, DispatchMessage, EndPaint, FillRect, GetBkColor, GetDlgItemTextA, GetMessage, HDC, HMENU, HWND, IDC_ARROW,
+                     IDI_APPLICATION, InvalidateRect, LoadCursor, LoadIcon, LOWORD, LPARAM, LRESULT, MB_ICONEXCLAMATION, MB_ICONINFORMATION, MB_OK,
+		     MessageBox, MSG, MF_STRING, MyInstance, PAINTSTRUCT, PostQuitMessage, RECT, RegisterClass, ShowWindow, SW_SHOWNORMAL, TextOut,
+		     TranslateMessage, UINT, WM_CLOSE, WM_COMMAND, WM_DESTROY, WM_PAINT, WNDCLASS, WPARAM, WS_CHILD, WS_EX_CLIENTEDGE, WS_SYSMENU,
+		     WS_VISIBLE;
 
 CONST
      ABOUT_ITEM    = 1001;
@@ -66,18 +64,7 @@ BEGIN
             RETURN 0;
         | EXIT_ITEM:
             PostQuitMessage (0);
-	    RETURN 0;
-	(* TODO - Checkbox activation code does not work *)
-(*	| IDB_CHECKBOX:
-	    CASE HIWORD(wParam) OF
-	      | BN_CLICKED:
-	        IF SendDlgItemMessage(hwnd, IDB_CHECKBOX, BM_GETCHECK, 0, 0) = 0 THEN
-                     MessageBox(NIL, "Checkbox Selected", "Success", MB_OK | MB_ICONINFORMATION);
-                ELSE
-                     MessageBox(NIL, "Checkbox Unselected", "Success", MB_OK | MB_ICONINFORMATION);
-		END; (* IF *)
-	    END; (* CASE *)   
-	    RETURN 0; *)
+	    RETURN 0;	
        ELSE
 	    (* TODO - Get dialog info only works for the first input box *)
 	    GetDlgItemTextA(hwnd, 0, inputpower, 10);
