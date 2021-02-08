@@ -95,11 +95,10 @@ BEGIN
 		 END; (* IF *)
 	    END; (* IF *)	    
 	    IF (resultpower = strAllRight) AND (resultgain = strAllRight) AND (resultfrequency = strAllRight) AND (resultdistance = strAllRight) THEN
-		 (* TODO - Test calculation, first quick check seemed very wrong *)
 		 (* PWR = 1000 * WATTS *)
 		 PWR := valuepower * 1000.0;
 		 (* EIRP = PWR * (10 ^ (GAIN / 10)) *)
-		 EIRP := PWR * power(valuegain / 10.0, 10.0);
+		 EIRP := PWR * power(10.0, valuegain / 10.0);
 		 (* DX = FT * 30.48 *)
 		 DX := valuedistance * 30.48;
 		 (* 260 IF F<1.34 THEN STD1=100:STD2=100:GOTO 330
@@ -144,7 +143,7 @@ BEGIN
 		 DX2 := sqrt((GF * EIRP) / (std2 * pi)) / 30.48;
                  (* 430 STD1=(INT((STD1*100)+.5))/100:STD2=(INT((STD2*100)+.5))/100 *)              
                  (* 450 PRINT "FROM THE ANTENNA CENTER THE ESTIMATED POWER DENSITY IS";PWRDENS;"MW/CM2.":PRINT *)
-		 RealToStr(PWRDENS, outputdensity);
+		 RealToStr(PWRDENS, outputdensity); 
 		 (* 460 PRINT "AT";F;"MHZ, THE MAXIMUM PERMISSIBLE EXPOSURE (MPE) IN `CONTROLLED" *)
 		 (* 470 PRINT "ENVIRONMENTS' (SUCH AS YOUR OWN HOUSEHOLD OR CAR) IS"; STD1; "MW/CM2." *)
 		 RealToStr(std1, outputmpecontrolled);
