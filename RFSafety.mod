@@ -67,24 +67,23 @@ BEGIN
         | EXIT_ITEM:
             PostQuitMessage (0);
 	    RETURN 0;	
-       ELSE
-	    (* The correct section is getting called, but I can't get the values for anything other than power *)
-	    GetDlgItemTextA(CAST(HWND, lParam), 0, input, 10);
+      ELSE
+	    (* TODO - Zero is not acceptable, will crash calculations, so don't allow it *)
 	    IF lParam = CAST(INT32, powerhwnd) THEN
+		 GetDlgItemTextA(hwnd, 0, input, 10);
 		 StrToReal(input, valuepower, resultpower);
-		 RealToStr(valuepower, outputdensity);
             ELSIF lParam = CAST(INT32, gainhwnd) THEN
+		 GetDlgItemTextA(hwnd, 1, input, 10);
 		 StrToReal(input, valuegain, resultgain);
-		 RealToStr(valuegain, outputdensity);
             ELSIF lParam = CAST(INT32, frequencyhwnd) THEN
+		 GetDlgItemTextA(hwnd, 2, input, 10);
 		 StrToReal(input, valuefrequency, resultfrequency);
-		 RealToStr(valuefrequency, outputdensity);
 	    ELSIF lParam = CAST(INT32, distancehwnd) THEN
+		 GetDlgItemTextA(hwnd, 3, input, 10);
 		 StrToReal(input, valuedistance, resultdistance);
-		 RealToStr(valuedistance, outputdensity);
 	    END; (* IF *)	    
-	    (*IF (resultpower = strAllRight) AND (resultgain = strAllRight) AND (resultfrequency = strAllRight) AND (resultdistance = strAllRight) THEN
-		 (* TODO - Perform calculations and update output text*)
+	    IF (resultpower = strAllRight) AND (resultgain = strAllRight) AND (resultfrequency = strAllRight) AND (resultdistance = strAllRight) THEN
+		 (* TODO - Test calculation, first quick check seemed very wrong *)
 		 (* PWR = 1000 * WATTS *)
 		 PWR := valuepower * 1000.0;
 		 (* EIRP = PWR * (10 ^ (GAIN / 10)) *)
@@ -165,7 +164,7 @@ BEGIN
 		 outputdistanceuncontrolled := "          ";
 		 outputmpecontrolled := "          ";
 		 outputmpeuncontrolled := "          ";
-	    END; (* IF *)*)
+	    END; (* IF *)
 	    InvalidateRect(hwnd, invalidaterect, FALSE);
         END; (* CASE *)
       RETURN 0;
@@ -217,8 +216,9 @@ END WndProc;
 VAR
     className       : ARRAY [0..14] OF CHAR;    
     hwnd            : HWND;
+    id              : INT32;
     menu            : HMENU;
-    Msg             : MSG;   
+    Msg             : MSG;
     wc              : WNDCLASS;
 
 BEGIN
@@ -261,10 +261,14 @@ BEGIN
     END;
 
     (* Create menu (exit and about box) plus input windows *)
-    powerhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 10, 80, 20, hwnd, NIL, MyInstance(), NIL);
-    gainhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 40, 80, 20, hwnd, NIL, MyInstance(), NIL);
-    frequencyhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 70, 80, 20, hwnd, NIL, MyInstance(), NIL);
-    distancehwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 100, 80, 20, hwnd, NIL, MyInstance(), NIL);
+    id := 0;
+    powerhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 10, 80, 20, hwnd, CAST(HMENU, id), MyInstance(), NIL);
+    id := 1;
+    gainhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 40, 80, 20, hwnd, CAST(HMENU, id), MyInstance(), NIL);
+    id := 2;
+    frequencyhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 70, 80, 20, hwnd, CAST(HMENU, id), MyInstance(), NIL);
+    id := 3;
+    distancehwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 100, 80, 20, hwnd, CAST (HMENU, id), MyInstance(), NIL);
     gfhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Button", "", WS_CHILD + BS_CHECKBOX, 250, 130, 17, 17, hwnd, NIL, MyInstance(), NIL);
 
     gfchecked := FALSE;
