@@ -2,8 +2,9 @@ MODULE RFSafety;
 
 FROM RealStr IMPORT ConvResults, StrToReal;
 FROM SYSTEM  IMPORT ADR, CAST;
-FROM Windows IMPORT AppendMenu, BeginPaint, BS_CHECKBOX, CreateMenu, CreateWindowEx, CS_SET, CW_USEDEFAULT, DefWindowProc, DestroyWindow, DispatchMessage,
-                    EndPaint, GetDlgItemTextA,
+FROM Windows IMPORT AppendMenu, BeginPaint, BS_CHECKBOX, CreateMenu, CreateSolidBrush, CreateWindowEx, CS_SET, CW_USEDEFAULT, DefWindowProc,
+                    DestroyWindow, DispatchMessage,
+                    EndPaint, FillRect, GetBkColor, GetDlgItemTextA,
                     GetMessage, HDC, HMENU, HWND, IDC_ARROW, IDI_APPLICATION, InvalidateRect, LoadCursor, LoadIcon, LOWORD, LPARAM, LRESULT,
 		    MB_ICONEXCLAMATION,
                     MB_ICONINFORMATION, MB_OK, MessageBox, MSG, MF_STRING, MyInstance, PAINTSTRUCT, PostQuitMessage, RECT, RegisterClass, ShowWindow,
@@ -17,6 +18,13 @@ CONST
 
 VAR
      invalidaterect : RECT;
+     outputcompliancecontrolled   : ARRAY [0..3] OF CHAR;
+     outputcomplianceuncontrolled : ARRAY [0..3] OF CHAR;
+     outputdensity                : ARRAY [0..10] OF CHAR;
+     outputdistancecontrolled     : ARRAY [0..10] OF CHAR;
+     outputdistanceuncontrolled   : ARRAY [0..10] OF CHAR;
+     outputmpecontrolled          : ARRAY [0..10] OF CHAR;
+     outputmpeuncontrolled        : ARRAY [0..10] OF CHAR;
 
 PROCEDURE ["StdCall"] WndProc(hwnd : HWND; msg : UINT; wParam : WPARAM;  lParam : LPARAM): LRESULT;
 VAR
@@ -60,14 +68,19 @@ BEGIN
 	    IF (resultpower = strAllRight) AND (resultgain = strAllRight) AND (resultfrequency = strAllRight) AND (resultdistance = strAllRight) THEN
 		 (* TODO - Perform calculations and update output text*)
 	    ELSE
-		 (* TODO - Blank output text *)
+		 outputcompliancecontrolled := " NO";
+		 outputcomplianceuncontrolled := " NO";
+		 outputdensity := "          ";
+		 outputdistancecontrolled := "          ";
+		 outputdistanceuncontrolled := "          ";
+		 outputmpecontrolled := "          ";
+		 outputmpeuncontrolled := "          ";
 	    END; (* IF *)
 	    InvalidateRect(hwnd, invalidaterect, FALSE);
         END; (* CASE *)
       RETURN 0;
     | WM_PAINT   :      
       hdc := BeginPaint(hwnd, ps);
-      (* TODO - Paint/generate form *)
       TextOut(hdc, 5, 10, "Power", 5);
       TextOut(hdc, 200, 10, ":", 1);
       TextOut(hdc, 5, 40, "Gain", 4);
@@ -91,7 +104,15 @@ BEGIN
       TextOut(hdc, 5, 310, "Controlled Compliance", 21);
       TextOut(hdc, 200, 310, ":", 1);
       TextOut(hdc, 5, 340, "Uncontrolled Compliance", 23);
-      TextOut(hdc, 200, 340, ":", 1);      
+      TextOut(hdc, 200, 340, ":", 1);
+      FillRect(hdc, invalidaterect, CreateSolidBrush(GetBkColor(hdc)));
+      TextOut(hdc, 250, 160, outputdensity, 10);
+      TextOut(hdc, 250, 190, outputmpecontrolled, 10);
+      TextOut(hdc, 250, 220, outputmpeuncontrolled, 10);
+      TextOut(hdc, 250, 250, outputdistancecontrolled, 10);
+      TextOut(hdc, 250, 280, outputdistanceuncontrolled, 10);
+      TextOut(hdc, 250, 310, outputcompliancecontrolled, 3);
+      TextOut(hdc, 250, 340, outputcomplianceuncontrolled, 3);
       EndPaint(hwnd, ps);
       RETURN 0;
     | WM_CLOSE   :
