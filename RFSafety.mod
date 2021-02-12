@@ -5,10 +5,10 @@ FROM RealStr  IMPORT ConvResults, RealToStr, StrToReal;
 FROM SYSTEM   IMPORT ADR, CAST, INT32;
 FROM Windows  IMPORT AppendMenu, BeginPaint, BS_CHECKBOX, CreateMenu, CreateSolidBrush, CreateWindowEx, CS_SET, CW_USEDEFAULT, DefWindowProc,
                      DestroyWindow, DispatchMessage, EndPaint, FillRect, GetBkColor, GetDlgItemTextA, GetMessage, HDC, HMENU, HWND, IDC_ARROW,
-                     IDI_APPLICATION, InvalidateRect, LoadCursor, LoadIcon, LOWORD, LPARAM, LRESULT, MB_ICONEXCLAMATION, MB_ICONINFORMATION, MB_OK,
-		     MessageBox, MSG, MF_STRING, MyInstance, PAINTSTRUCT, PostQuitMessage, RECT, RegisterClass, ShowWindow, SW_SHOWNORMAL, TextOut,
-		     TranslateMessage, UINT, WM_CLOSE, WM_COMMAND, WM_DESTROY, WM_PAINT, WNDCLASS, WPARAM, WS_CHILD, WS_EX_CLIENTEDGE, WS_SYSMENU,
-		     WS_VISIBLE;
+                     IDI_APPLICATION, InvalidateRect, IsDialogMessage, LoadCursor, LoadIcon, LOWORD, LPARAM, LRESULT, MB_ICONEXCLAMATION,
+		     MB_ICONINFORMATION, MB_OK, MessageBox, MSG, MF_STRING, MyInstance, PAINTSTRUCT, PostQuitMessage, RECT, RegisterClass, SetFocus,
+		     ShowWindow, SW_SHOWNORMAL, TextOut, TranslateMessage, UINT, WM_CLOSE, WM_COMMAND, WM_DESTROY, WM_PAINT, WNDCLASS, WPARAM, WS_CHILD,
+		     WS_EX_CLIENTEDGE, WS_SYSMENU, WS_VISIBLE, WS_TABSTOP;
 
 CONST
      ABOUT_ITEM    = 1001;
@@ -58,7 +58,6 @@ BEGIN
     CASE msg OF
     | WM_COMMAND :      
       (* TODO - Handle checkbox click? *)
-      (* TODO - Tab to next field? *)
       CASE LOWORD(wParam) OF        
         | ABOUT_ITEM:          
 	  MessageBox(NIL,
@@ -269,14 +268,14 @@ BEGIN
 
     (* Create menu (exit and about box) plus input windows *)
     id := 0;
-    powerhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 10, 80, 20, hwnd, CAST(HMENU, id), MyInstance(), NIL);
+    powerhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD + WS_TABSTOP, 250, 10, 80, 20, hwnd, CAST(HMENU, id), MyInstance(), NIL);
     id := 1;
-    gainhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 40, 80, 20, hwnd, CAST(HMENU, id), MyInstance(), NIL);
+    gainhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD + WS_TABSTOP, 250, 40, 80, 20, hwnd, CAST(HMENU, id), MyInstance(), NIL);
     id := 2;
-    frequencyhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 70, 80, 20, hwnd, CAST(HMENU, id), MyInstance(), NIL);
+    frequencyhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD + WS_TABSTOP, 250, 70, 80, 20, hwnd, CAST(HMENU, id), MyInstance(), NIL);
     id := 3;
-    distancehwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD, 250, 100, 80, 20, hwnd, CAST (HMENU, id), MyInstance(), NIL);
-    gfhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Button", "", WS_CHILD + BS_CHECKBOX, 250, 130, 17, 17, hwnd, NIL, MyInstance(), NIL);
+    distancehwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD + WS_TABSTOP, 250, 100, 80, 20, hwnd, CAST (HMENU, id), MyInstance(), NIL);
+    gfhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Button", "", WS_CHILD + BS_CHECKBOX + WS_TABSTOP, 250, 130, 17, 17, hwnd, NIL, MyInstance(), NIL);
 
     gfchecked := FALSE;
     
@@ -286,11 +285,14 @@ BEGIN
     ShowWindow(frequencyhwnd, SW_SHOWNORMAL);
     ShowWindow(distancehwnd, SW_SHOWNORMAL);
     ShowWindow(gfhwnd, SW_SHOWNORMAL);
+    SetFocus(powerhwnd);
             
     (* The Message Loop *)
     WHILE GetMessage( Msg, NIL, 0, 0) DO
-       TranslateMessage(Msg);
-       DispatchMessage(Msg);
+       IF NOT IsDialogMessage(hwnd, Msg) THEN
+	    TranslateMessage(Msg);
+	    DispatchMessage(Msg);
+       END; (* IF *)
     END;
 
 END RFSafety.
