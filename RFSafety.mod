@@ -3,12 +3,12 @@ MODULE RFSafety;
 FROM RealMath IMPORT pi, power, sqrt;
 FROM RealStr  IMPORT ConvResults, RealToStr, StrToReal;
 FROM SYSTEM   IMPORT ADR, CAST, INT32;
-FROM Windows  IMPORT AppendMenu, BeginPaint, BS_CHECKBOX, CreateMenu, CreateSolidBrush, CreateWindowEx, CS_SET, CW_USEDEFAULT, DefWindowProc,
-                     DestroyWindow, DispatchMessage, EndPaint, FillRect, GetBkColor, GetDlgItemTextA, GetMessage, HDC, HMENU, HWND, IDC_ARROW,
-                     IDI_APPLICATION, InvalidateRect, IsDialogMessage, LoadCursor, LoadIcon, LOWORD, LPARAM, LRESULT, MB_ICONEXCLAMATION,
-		     MB_ICONINFORMATION, MB_OK, MessageBox, MSG, MF_STRING, MyInstance, PAINTSTRUCT, PostQuitMessage, RECT, RegisterClass, SetFocus,
-		     ShowWindow, SW_SHOWNORMAL, TextOut, TranslateMessage, UINT, WM_CLOSE, WM_COMMAND, WM_DESTROY, WM_PAINT, WNDCLASS, WPARAM, WS_CHILD,
-		     WS_EX_CLIENTEDGE, WS_SYSMENU, WS_VISIBLE, WS_TABSTOP;
+FROM Windows  IMPORT AppendMenu, BeginPaint, BS_AUTOCHECKBOX, BST_CHECKED, CreateMenu, CreateSolidBrush, CreateWindowEx, CS_SET, CW_USEDEFAULT,
+                     DefWindowProc, DestroyWindow, DispatchMessage, DWORD, EndPaint, FillRect, GetBkColor, GetDlgItemTextA, GetMessage, HDC, HMENU, HWND,
+		     IDC_ARROW, IDI_APPLICATION, InvalidateRect, IsDialogMessage, IsDlgButtonChecked, LoadCursor, LoadIcon, LOWORD, LPARAM, LRESULT,
+		     MB_ICONEXCLAMATION, MB_ICONINFORMATION, MB_OK, MessageBox, MSG, MF_STRING, MyInstance, PAINTSTRUCT, PostQuitMessage, RECT,
+		     RegisterClass, SetFocus, ShowWindow, SW_SHOWNORMAL, TextOut, TranslateMessage, UINT, WM_CLOSE, WM_COMMAND, WM_DESTROY, WM_PAINT,
+		     WNDCLASS, WPARAM, WS_CHILD, WS_EX_CLIENTEDGE, WS_SYSMENU, WS_VISIBLE, WS_TABSTOP;
 
 CONST
      ABOUT_ITEM    = 1001;
@@ -57,7 +57,6 @@ VAR
 BEGIN
     CASE msg OF
     | WM_COMMAND :      
-      (* TODO - Handle checkbox click? *)
       CASE LOWORD(wParam) OF        
         | ABOUT_ITEM:          
 	  MessageBox(NIL,
@@ -91,6 +90,12 @@ BEGIN
 		 StrToReal(input, valuedistance, resultdistance);
 		 IF valuedistance = 0.0 THEN
 		      resultdistance := strOutOfRange;
+		 END; (* IF *)
+	    ELSIF lParam = CAST(INT32, gfhwnd) THEN
+		 IF IsDlgButtonChecked(hwnd, 4) = CAST(DWORD, BST_CHECKED) THEN
+		      gfchecked := TRUE;
+		 ELSE
+		      gfchecked := FALSE;
 		 END; (* IF *)
 	    END; (* IF *)	    
 	    IF (resultpower = strAllRight) AND (resultgain = strAllRight) AND (resultfrequency = strAllRight) AND (resultdistance = strAllRight) THEN
@@ -274,8 +279,10 @@ BEGIN
     id := 2;
     frequencyhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD + WS_TABSTOP, 250, 70, 80, 20, hwnd, CAST(HMENU, id), MyInstance(), NIL);
     id := 3;
-    distancehwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD + WS_TABSTOP, 250, 100, 80, 20, hwnd, CAST (HMENU, id), MyInstance(), NIL);
-    gfhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Button", "", WS_CHILD + BS_CHECKBOX + WS_TABSTOP, 250, 130, 17, 17, hwnd, NIL, MyInstance(), NIL);
+    distancehwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD + WS_TABSTOP, 250, 100, 80, 20, hwnd, CAST(HMENU, id), MyInstance(), NIL);
+    id := 4;
+    gfhwnd := CreateWindowEx(WS_EX_CLIENTEDGE, "Button", "", WS_CHILD + BS_AUTOCHECKBOX + WS_TABSTOP, 250, 130, 17, 17, hwnd, CAST(HMENU, id),
+			     MyInstance(), NIL);
 
     gfchecked := FALSE;
     
